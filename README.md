@@ -1,5 +1,12 @@
 # entropy-mnemonic
 
+[![npm version](https://badge.fury.io/js/entropy-mnemonic.svg)](https://www.npmjs.com/package/entropy-mnemonic)
+[![npm downloads](https://img.shields.io/npm/dm/entropy-mnemonic)](https://www.npmjs.com/package/entropy-mnemonic)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/xeondesk/entropy-mnemonic/workflows/Node.js%20CI/badge.svg)](https://github.com/xeondesk/entropy-mnemonic/actions)
+[![Coverage](https://img.shields.io/codecov/c/github/xeondesk/entropy-mnemonic)](https://codecov.io/gh/xeondesk/entropy-mnemonic)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+
 A simple and complete entropy-mnemonic mnemonic (passphrase) and entropy generator in TypeScript.
 
 ## Installation
