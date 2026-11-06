@@ -1,5 +1,6 @@
 import { defaultList } from "./wordLists";
 import { IWordList } from "./wordLists/WordList";
+import * as pbkdf2 from "pbkdf2";
 
 /**
  * Converts a mnemonic phrase to a binary seed using PBKDF2 with HMAC-SHA512.
@@ -31,7 +32,6 @@ export function mnemonicToSeed(
   const normalizedPassphrase = "mnemonic" + passphrase.normalize("NFKD");
 
   // Use pbkdf2 library for PBKDF2
-  const pbkdf2 = require("pbkdf2");
   const seed = pbkdf2.pbkdf2Sync(
     normalizedMnemonic,
     normalizedPassphrase,
