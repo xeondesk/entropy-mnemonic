@@ -1,5 +1,5 @@
 import { expect, describe, it } from "vitest";
-import { generateEntropy, getByteArrayFromHexString, getIntegerFromBin } from "../src/common";
+import { generateEntropy, getByteArrayFromHexString, getIntegerFromBin, bytesToBinary, validateEntropyLength } from "../src/common";
 
 describe("getByteArrayFromHexString", () => {
   it("should transform an hex string to an int array", () => {
@@ -101,5 +101,45 @@ describe("generateEntropy", () => {
       expect(() => generateEntropy(21)).toThrow();
       expect(() => generateEntropy(31)).toThrow();
     });
+  });
+});
+
+describe("bytesToBinary", () => {
+  it("should transform a byte array to a binary string", () => {
+    expect(bytesToBinary([0])).toBe("00000000");
+    expect(bytesToBinary([1])).toBe("00000001");
+    expect(bytesToBinary([255])).toBe("11111111");
+    expect(bytesToBinary([0, 255])).toBe("0000000011111111");
+    expect(bytesToBinary([1, 2, 3])).toBe("000000010000001000000011");
+  });
+
+  it("should handle empty array", () => {
+    expect(bytesToBinary([])).toBe("");
+  });
+});
+
+describe("validateEntropyLength", () => {
+  it("should accept valid lengths", () => {
+    expect(() => validateEntropyLength(16)).not.toThrow();
+    expect(() => validateEntropyLength(32)).not.toThrow();
+    expect(() => validateEntropyLength(64)).not.toThrow();
+    expect(() => validateEntropyLength(20)).not.toThrow();
+  });
+
+  it("should reject lengths less than 16", () => {
+    expect(() => validateEntropyLength(15)).toThrow();
+    expect(() => validateEntropyLength(0)).toThrow();
+    expect(() => validateEntropyLength(-1)).toThrow();
+  });
+
+  it("should reject lengths greater than 64", () => {
+    expect(() => validateEntropyLength(65)).toThrow();
+    expect(() => validateEntropyLength(100)).toThrow();
+  });
+
+  it("should reject lengths not divisible by 4", () => {
+    expect(() => validateEntropyLength(17)).toThrow();
+    expect(() => validateEntropyLength(21)).toThrow();
+    expect(() => validateEntropyLength(31)).toThrow();
   });
 });

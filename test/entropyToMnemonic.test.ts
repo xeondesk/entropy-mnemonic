@@ -1,5 +1,6 @@
 import { expect, describe, it } from "vitest";
 import { entropyToMnemonic } from "../src/entropy";
+import { IWordList } from "../src/wordLists/WordList";
 
 describe("entropyToMnemonic", () => {
   describe("when the entropy is a 32 characters hex string)", () => {
@@ -45,6 +46,32 @@ describe("entropyToMnemonic", () => {
       expect(() => entropyToMnemonic("a")).toThrow();
       expect(() => entropyToMnemonic("aaaa")).toThrow();
       expect(() => entropyToMnemonic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).toThrow();
+    });
+  });
+
+  describe("when the entropy results in word index out of bounds", () => {
+    it("should throw an error", () => {
+      const smallWordList: IWordList = {
+        language: "test",
+        spacer: " ",
+        words: ["word1", "word2", "word3", "word4"]
+      };
+      expect(() => entropyToMnemonic("063679ca1b28b5cfda9c186b367e271e", smallWordList)).toThrow();
+    });
+  });
+
+  describe("when the entropy is not a string", () => {
+    it("should throw an error", () => {
+      expect(() => entropyToMnemonic(null as any)).toThrow();
+      expect(() => entropyToMnemonic(undefined as any)).toThrow();
+      expect(() => entropyToMnemonic(123 as any)).toThrow();
+      expect(() => entropyToMnemonic({} as any)).toThrow();
+    });
+  });
+
+  describe("when the entropy is an empty string", () => {
+    it("should throw an error", () => {
+      expect(() => entropyToMnemonic("")).toThrow();
     });
   });
 });
