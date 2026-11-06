@@ -1,8 +1,8 @@
 {
   "name": "entropy-mnemonic",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "type": "module",
-  "description": "A simple and complete entropy-mnemonic mnemonic (passphrase) and entropy generator in TypeScript.",
+  "description": "A complete BIP-39 mnemonic and entropy generator with seed generation, validation, and multi-language support in TypeScript.",
   "main": "es/index.js",
   "module": "es/index.js",
   "browser": "umd/index.js",
@@ -13,7 +13,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "test": "vitest",
-    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
     "coverage": "vitest run --coverage",
     "release": "standard-version"
   },
@@ -29,7 +29,13 @@
     "entropy-mnemonic",
     "mnemonic",
     "passphrase",
-    "entropy"
+    "entropy",
+    "bip39",
+    "seed",
+    "cryptocurrency",
+    "wallet",
+    "bip-39",
+    "validation"
   ],
   "funding": "https://github.com/sponsors/xeondesk",
   "author": "Md Sulaiman <infosulaiman@icloud.com>",
@@ -43,7 +49,8 @@
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@vitest/coverage-v8": "^5.0.3",
     "c8": "^9.1.0",
     "eslint": "^8.24.0",
@@ -55,7 +62,7 @@
   },
   "dependencies": {
     "js-sha256": "^0.9.0",
-    "nanoid": "^3.3.20",
+    "pbkdf2": "^3.0.17",
     "tslib": "^2.6.0"
   }
 }

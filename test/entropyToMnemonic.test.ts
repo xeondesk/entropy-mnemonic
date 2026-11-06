@@ -40,11 +40,11 @@ describe("entropyToMnemonic", () => {
     });
   });
 
-  describe("when the entropy length is outside the 16-32 range", () => {
+  describe("when the entropy length is outside the 16-64 range", () => {
     it("should throw an error", () => {
       expect(() => entropyToMnemonic("a")).toThrow();
       expect(() => entropyToMnemonic("aaaa")).toThrow();
-      expect(() => entropyToMnemonic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).toThrow();
+      expect(() => entropyToMnemonic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).toThrow();
     });
   });
 });

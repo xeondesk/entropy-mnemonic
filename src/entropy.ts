@@ -16,11 +16,17 @@ import {
  * @throws Error if entropy is invalid
  */
 export function entropyToMnemonic(entropy: string, wordList: IWordList = defaultList) {
+  if (!entropy || typeof entropy !== "string") {
+    throw new Error(
+      "[entropy-mnemonic] Invalid entropy: must be a non-empty string"
+    );
+  }
+
   validateEntropyLength(entropy.length);
 
-  if (!entropy.match(/^[a-zA-Z0-9]+$/)) {
+  if (!/^[a-fA-F0-9]+$/.test(entropy)) {
     throw new Error(
-      "[entropy-mnemonic] Invalid entropy: it should be an hexadecimal string (char from: [a-zA-Z0-9])"
+      "[entropy-mnemonic] Invalid entropy: must contain only hexadecimal characters (0-9, a-f, A-F)"
     );
   }
 
@@ -31,7 +37,15 @@ export function entropyToMnemonic(entropy: string, wordList: IWordList = default
   const bits = entropyBits + checksumBits;
   const chunks = bits.match(/(.{1,11})/g) ?? [];
 
-  const words = chunks.map((binary) => wordList.words[getIntegerFromBin(binary)]);
+  const words = chunks.map((binary) => {
+    const index = getIntegerFromBin(binary);
+    if (index >= wordList.words.length) {
+      throw new Error(
+        "[entropy-mnemonic] Invalid entropy: word index out of bounds"
+      );
+    }
+    return wordList.words[index];
+  });
 
   return words.join(wordList.spacer);
 }

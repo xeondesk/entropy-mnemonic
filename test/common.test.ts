@@ -72,15 +72,15 @@ describe("generateEntropy", () => {
     });
   });
 
-  describe("when a length within the [128,256] range and is a multiple of 32 is passed", () => {
-    it("it should create a random string with a lenght of (the input / 4)", () => {
+  describe("when a length within the [16,64] range and is a multiple of 4 is passed", () => {
+    it("it should create a random string with a lenght of (the input)", () => {
       expect(generateEntropy(20)).toHaveLength(20);
     });
   });
 
-  describe("when a length greater than 32 is passed", () => {
+  describe("when a length greater than 64 is passed", () => {
     it("it should throw an error", () => {
-      expect(() => generateEntropy(33)).toThrow();
+      expect(() => generateEntropy(65)).toThrow();
       expect(() => generateEntropy(1000)).toThrow();
       expect(() => generateEntropy(Infinity)).toThrow();
     });
