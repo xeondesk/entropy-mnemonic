@@ -99,9 +99,9 @@ export function mnemonicToEntropy(mnemonic: string, wordList: IWordList = defaul
   const entropyBits = bits.slice(0, dividerIndex);
   const checksumBits = bits.slice(dividerIndex);
 
-  const entropyBytes = (entropyBits.match(/(.{1,8})/g) ?? []).map((byte) =>
+  const entropyBytes = entropyBits.match(/(.{1,8})/g)?.map((byte) =>
     getIntegerFromBin(byte)
-  );
+  ) ?? [];
   const newChecksum = getChecksumBin(entropyBytes);
 
   if (newChecksum !== checksumBits) {

@@ -5,7 +5,7 @@ import { sha256 } from "js-sha256";
  * @param byteCount - Number of random bytes to generate
  * @returns Uint8Array of random bytes
  */
-function getRandomBytes(byteCount: number): Uint8Array {
+export function getRandomBytes(byteCount: number): Uint8Array {
   const bytes = new Uint8Array(byteCount);
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(bytes);
@@ -23,7 +23,7 @@ function getRandomBytes(byteCount: number): Uint8Array {
  * @param bytes - Uint8Array of bytes
  * @returns Hexadecimal string
  */
-function bytesToHex(bytes: Uint8Array): string {
+export function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
@@ -54,7 +54,7 @@ export function validateEntropyLength(length: number) {
 
 /**
  * Generates a random entropy hex string using cryptographically secure random generation.
- * @param length - Desired length in characters (16-32, multiple of 4)
+ * @param length - Desired length in characters (16-64, multiple of 4)
  * @returns Random hexadecimal entropy string
  * @throws Error if length is invalid
  */

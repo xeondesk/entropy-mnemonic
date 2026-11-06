@@ -1,5 +1,5 @@
 import { expect, describe, it } from "vitest";
-import { generateEntropy, getByteArrayFromHexString, getIntegerFromBin, bytesToBinary, validateEntropyLength } from "../src/common";
+import { generateEntropy, getByteArrayFromHexString, getIntegerFromBin, bytesToBinary, validateEntropyLength, getRandomBytes, bytesToHex } from "../src/common";
 
 describe("getByteArrayFromHexString", () => {
   it("should transform an hex string to an int array", () => {
@@ -141,5 +141,54 @@ describe("validateEntropyLength", () => {
     expect(() => validateEntropyLength(17)).toThrow();
     expect(() => validateEntropyLength(21)).toThrow();
     expect(() => validateEntropyLength(31)).toThrow();
+  });
+});
+
+describe("getRandomBytes", () => {
+  it("should generate random bytes of specified length", () => {
+    const bytes = getRandomBytes(16);
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    expect(bytes.length).toBe(16);
+  });
+
+  it("should generate different values on subsequent calls", () => {
+    const bytes1 = getRandomBytes(32);
+    const bytes2 = getRandomBytes(32);
+    expect(bytes1).not.toEqual(bytes2);
+  });
+
+  it("should handle zero byte count", () => {
+    const bytes = getRandomBytes(0);
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    expect(bytes.length).toBe(0);
+  });
+
+  it("should use fallback when crypto is not available", () => {
+    const originalCrypto = (global as any).crypto;
+    delete (global as any).crypto;
+
+    const bytes = getRandomBytes(16);
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    expect(bytes.length).toBe(16);
+
+    (global as any).crypto = originalCrypto;
+  });
+});
+
+describe("bytesToHex", () => {
+  it("should convert Uint8Array to hex string", () => {
+    expect(bytesToHex(new Uint8Array([0]))).toBe("00");
+    expect(bytesToHex(new Uint8Array([255]))).toBe("ff");
+    expect(bytesToHex(new Uint8Array([0, 255, 128]))).toBe("00ff80");
+    expect(bytesToHex(new Uint8Array([1, 2, 3, 4, 5]))).toBe("0102030405");
+  });
+
+  it("should handle empty array", () => {
+    expect(bytesToHex(new Uint8Array([]))).toBe("");
+  });
+
+  it("should pad single digit hex values", () => {
+    expect(bytesToHex(new Uint8Array([15]))).toBe("0f");
+    expect(bytesToHex(new Uint8Array([10]))).toBe("0a");
   });
 });

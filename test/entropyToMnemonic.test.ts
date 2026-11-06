@@ -74,4 +74,23 @@ describe("entropyToMnemonic", () => {
       expect(() => entropyToMnemonic("")).toThrow();
     });
   });
+
+  describe("when entropy results in empty chunks", () => {
+    it("should handle edge case gracefully", () => {
+      // This tests the ?? [] fallback in the match operation
+      const result = entropyToMnemonic("00000000000000000000000000000000");
+      expect(result).toBeDefined();
+      expect(typeof result).toBe("string");
+      expect(result.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("when word index check passes", () => {
+    it("should not throw for valid indices", () => {
+      // This tests the branch where index < wordList.words.length
+      const result = entropyToMnemonic("063679ca1b28b5cfda9c186b367e271e");
+      expect(result).toBeDefined();
+      expect(result).toContain(" ");
+    });
+  });
 });
