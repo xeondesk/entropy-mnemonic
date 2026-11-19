@@ -32,30 +32,43 @@ describe("bip39SeedFromCommunity — seed equivalence", () => {
   it.each(entropies)("bengali seed === english seed for entropy %s", (entropy) => {
     const bn = bnMnemonicFor(entropy);
     const en = entropyToMnemonic(entropy, EN);
-    expect(bip39SeedFromCommunity(bn, "", BN)).toBe(mnemonicToBip39Seed(en, "", EN));
+    expect(bip39SeedFromCommunity(bn, BN, "")).toBe(mnemonicToBip39Seed(en, "", EN));
   });
 
   it("official vector: mapped bengali derives the official seed", () => {
     const en = "legal winner thank year wave sausage worth useful legal winner thank yellow";
     const bn = mapCanonicalToSource(en, BN);
-    expect(bip39SeedFromCommunity(bn, "TREZOR", BN)).toBe(
+    expect(bip39SeedFromCommunity(bn, BN, "TREZOR")).toBe(
       "2e8905819b8723fe2c1d161860e5ee1830318dbf49a83bd451cfb8440c28bd6fa457fe1296106559a3c80937a1c1069be3a3a5bd381ee6260e8d9739fce1f607"
     );
   });
 
-  it("covers all five valid mnemonic lengths", () => {
-    for (const entropy of entropies) {
+  // All five BIP-39 lengths: 128/160/192/224/256 bits -> 12/15/18/21/24 words
+  const LENGTH_CASES: Array<[string, number]> = [
+    ["00000000000000000000000000000000", 12], // 128 bits
+    ["0000000000000000000000000000000000000000", 15], // 160 bits
+    ["0".repeat(48), 18], // 192 bits
+    ["0000000000000000000000000000000000000000000000000000000000000000", 24], // 256 bits
+  ];
+
+  it.each(LENGTH_CASES)(
+    "entropy %s (%i words) preserves seed across passphrases",
+    (entropy, wordCount) => {
       const bn = bnMnemonicFor(entropy);
-      const seed = bip39SeedFromCommunity(bn, "", BN);
-      expect(seed).toHaveLength(128);
-      // word counts: 12,12,12,12,12,24
+      const en = entropyToMnemonic(entropy, EN);
+      expect(bn.split(" ")).toHaveLength(wordCount);
+      for (const pw of ["", "TREZOR", "correct horse"]) {
+        expect(bip39SeedFromCommunity(bn, BN, pw)).toBe(mnemonicToBip39Seed(en, pw, EN));
+      }
     }
-    // explicit 15/18/21 via crafted entropies
-    for (const e of [
-      "0000000000000000000000000000000000000000", // 20 bytes -> 15 words? (160+? )
-    ]) {
-      void e;
-    }
+  );
+
+  it("covers the 21-word (224-bit) length", () => {
+    const entropy = "f".repeat(56); // 28 bytes -> 21 words
+    const bn = bnMnemonicFor(entropy);
+    const en = entropyToMnemonic(entropy, EN);
+    expect(bn.split(" ")).toHaveLength(21);
+    expect(bip39SeedFromCommunity(bn, BN, "pw")).toBe(mnemonicToBip39Seed(en, "pw", EN));
   });
 });
 
@@ -64,19 +77,19 @@ describe("bip39SeedFromCommunity — passphrase handling", () => {
   const en = entropyToMnemonic("063679ca1b28b5cfda9c186b367e271e", EN);
 
   it("empty passphrase matches english", () => {
-    expect(bip39SeedFromCommunity(bn, "", BN)).toBe(mnemonicToBip39Seed(en, "", EN));
+    expect(bip39SeedFromCommunity(bn, BN, "")).toBe(mnemonicToBip39Seed(en, "", EN));
   });
 
   it("non-default passphrase matches english", () => {
-    expect(bip39SeedFromCommunity(bn, "TREZOR", BN)).toBe(mnemonicToBip39Seed(en, "TREZOR", EN));
-    expect(bip39SeedFromCommunity(bn, "correct horse battery staple", BN)).toBe(
+    expect(bip39SeedFromCommunity(bn, BN, "TREZOR")).toBe(mnemonicToBip39Seed(en, "TREZOR", EN));
+    expect(bip39SeedFromCommunity(bn, BN, "correct horse battery staple")).toBe(
       mnemonicToBip39Seed(en, "correct horse battery staple", EN)
     );
   });
 
   it("unicode passphrase preserved through NFKD normalization", () => {
     const pw = "pässwörd🔐";
-    expect(bip39SeedFromCommunity(bn, pw, BN)).toBe(mnemonicToBip39Seed(en, pw, EN));
+    expect(bip39SeedFromCommunity(bn, BN, pw)).toBe(mnemonicToBip39Seed(en, pw, EN));
   });
 });
 
@@ -84,8 +97,8 @@ describe("bip39SeedFromCommunity — fail closed", () => {
   const validBn = bnMnemonicFor("063679ca1b28b5cfda9c186b367e271e");
 
   it("rejects non-community wordlists", () => {
-    expect(() => bip39SeedFromCommunity(validBn, "", EN as IWordList)).toThrow(/community/);
-    expect(() => bip39SeedFromCommunity(validBn, "", japaneseWordList)).toThrow(/community/);
+    expect(() => bip39SeedFromCommunity(validBn, EN as IWordList, "")).toThrow(/community/);
+    expect(() => bip39SeedFromCommunity(validBn, japaneseWordList, "")).toThrow(/community/);
   });
 
   it("rejects community wordlist without pairing", () => {
@@ -96,7 +109,7 @@ describe("bip39SeedFromCommunity — fail closed", () => {
       kind: "community",
       words: BN.words,
     };
-    expect(() => bip39SeedFromCommunity(validBn, "", noPairing)).toThrow(/pairing/);
+    expect(() => bip39SeedFromCommunity(validBn, noPairing, "")).toThrow(/pairing/);
   });
 
   it("rejects tampered wordlist (stale content hash)", () => {
@@ -104,7 +117,7 @@ describe("bip39SeedFromCommunity — fail closed", () => {
       ...BN,
       words: Object.freeze(["HACKED", ...BN.words.slice(1)]),
     };
-    expect(() => bip39SeedFromCommunity(validBn, "", tampered)).toThrow(/pairing|hash/i);
+    expect(() => bip39SeedFromCommunity(validBn, tampered, "")).toThrow(/pairing|hash/i);
   });
 
   it("rejects wrong canonical target", () => {
@@ -112,12 +125,12 @@ describe("bip39SeedFromCommunity — fail closed", () => {
       ...BN,
       pairing: { ...BN.pairing!, canonicalId: "japanese" },
     };
-    expect(() => bip39SeedFromCommunity(validBn, "", wrongTarget)).toThrow();
+    expect(() => bip39SeedFromCommunity(validBn, wrongTarget, "")).toThrow();
   });
 
   it("rejects unknown community words", () => {
     const bad = validBn.split(" ").slice(0, 11).join(" ") + " notaword";
-    expect(() => bip39SeedFromCommunity(bad, "", BN)).toThrow(/not found/);
+    expect(() => bip39SeedFromCommunity(bad, BN, "")).toThrow(/not found/);
   });
 
   it("rejects bad checksum (valid words, wrong checksum)", () => {
@@ -127,17 +140,17 @@ describe("bip39SeedFromCommunity — fail closed", () => {
     const other = BN.words[(BN.words.indexOf(words[11]) + 1) % 2048];
     words[11] = other;
     const bad = words.join(" ");
-    expect(() => bip39SeedFromCommunity(bad, "", BN)).toThrow(/checksum/);
+    expect(() => bip39SeedFromCommunity(bad, BN, "")).toThrow(/checksum/);
   });
 
   it("rejects invalid word counts", () => {
     const short = validBn.split(" ").slice(0, 11).join(" ");
-    expect(() => bip39SeedFromCommunity(short, "", BN)).toThrow(/12, 15, 18/);
+    expect(() => bip39SeedFromCommunity(short, BN, "")).toThrow(/12, 15, 18/);
   });
 
   it("rejects empty mnemonic", () => {
-    expect(() => bip39SeedFromCommunity("", "", BN)).toThrow();
-    expect(() => bip39SeedFromCommunity("   ", "", BN)).toThrow();
+    expect(() => bip39SeedFromCommunity("", BN, "")).toThrow();
+    expect(() => bip39SeedFromCommunity("   ", BN, "")).toThrow();
   });
 });
 

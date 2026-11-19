@@ -113,17 +113,17 @@ export function mnemonicToBip39Seed(
  * H_source === H_canonical.
  *
  * @param mnemonic - Mnemonic phrase in the community wordlist
- * @param passphrase - Optional passphrase (default: empty string)
  * @param sourceWordList - The community wordlist the mnemonic belongs to.
  *   REQUIRED and explicit — this API never guesses a wordlist.
+ * @param passphrase - Optional passphrase (default: empty string)
  * @returns Hexadecimal seed string (64 bytes / 128 hex characters)
  * @throws Error on non-community source, invalid pairing, unknown words,
  *   bad word count, or checksum failure
  */
 export function bip39SeedFromCommunity(
   mnemonic: string,
-  passphrase: string = "",
-  sourceWordList: IWordList
+  sourceWordList: IWordList,
+  passphrase: string = ""
 ): string {
   if (!sourceWordList || sourceWordList.kind !== "community") {
     throw new Error(
