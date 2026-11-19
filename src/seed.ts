@@ -1,5 +1,6 @@
 import { mnemonicToEntropy } from "./mnemonic";
-import { defaultList } from "./wordLists";
+import { defaultList, getWordList } from "./wordLists";
+import { mapMnemonicToCanonical } from "./wordLists/mapping";
 import { IWordList } from "./wordLists/WordList";
 import * as pbkdf2 from "pbkdf2";
 
@@ -90,4 +91,59 @@ export function mnemonicToBip39Seed(
   // is a prerequisite for claiming BIP-39 seed interoperability.
   mnemonicToEntropy(mnemonic, wordList);
   return mnemonicToSeed(mnemonic, passphrase, wordList);
+}
+
+/**
+ * Derives a BIP-39-interoperable seed from a COMMUNITY-wordlist mnemonic
+ * (e.g. Bengali/TZUR) by first mapping it to its verified canonical
+ * English equivalent. The PBKDF2 input is ALWAYS the canonical mnemonic —
+ * the community-language sentence is never used for seed derivation.
+ *
+ * Validation chain (all must pass; any failure throws):
+ *  1. `sourceWordList` must be `kind === "community"` with pairing metadata
+ *  2. Pairing integrity: scheme, canonical target, both content hashes,
+ *     pairing hash (via mapMnemonicToCanonical — fails closed)
+ *  3. Every source word must resolve in the community wordlist
+ *  4. The mapped canonical mnemonic is validated by mnemonicToBip39Seed:
+ *     word membership, word count (12/15/18/21/24), BIP-39 checksum
+ *  5. PBKDF2-HMAC-SHA512 over the NFKD canonical mnemonic
+ *
+ * Because index-pairing preserves indices exactly, the resulting seed is
+ * identical to deriving from the equivalent English mnemonic:
+ * H_source === H_canonical.
+ *
+ * @param mnemonic - Mnemonic phrase in the community wordlist
+ * @param passphrase - Optional passphrase (default: empty string)
+ * @param sourceWordList - The community wordlist the mnemonic belongs to.
+ *   REQUIRED and explicit — this API never guesses a wordlist.
+ * @returns Hexadecimal seed string (64 bytes / 128 hex characters)
+ * @throws Error on non-community source, invalid pairing, unknown words,
+ *   bad word count, or checksum failure
+ */
+export function bip39SeedFromCommunity(
+  mnemonic: string,
+  passphrase: string = "",
+  sourceWordList: IWordList
+): string {
+  if (!sourceWordList || sourceWordList.kind !== "community") {
+    throw new Error(
+      `[entropy-mnemonic] bip39SeedFromCommunity requires a community ` +
+        `wordlist (kind: "community"); got ${sourceWordList?.id ?? "none"} ` +
+        `(kind: ${sourceWordList?.kind ?? "unknown"}). For canonical ` +
+        `wordlists use mnemonicToBip39Seed.`
+    );
+  }
+  const pairing = sourceWordList.pairing;
+  if (!pairing) {
+    throw new Error(
+      `[entropy-mnemonic] Wordlist "${sourceWordList.id}" has no pairing ` +
+        `metadata; cannot derive a BIP-39-interoperable seed.`
+    );
+  }
+  // Enforces: pairing scheme, canonical target, content hashes, pairing
+  // hash — fails closed on stale or tampered metadata.
+  const canonicalMnemonic = mapMnemonicToCanonical(mnemonic, sourceWordList);
+  const canonicalList = getWordList(pairing.canonicalId);
+  // Validates membership, word count, and checksum; derives the seed.
+  return mnemonicToBip39Seed(canonicalMnemonic, passphrase, canonicalList);
 }
