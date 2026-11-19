@@ -169,11 +169,14 @@ Extend `IWordList` (additive, optional fields — I6 safe):
 ```ts
 interface IWordList {
   // ...v1 fields unchanged
-  readonly version?: string;        // e.g. "bip39-2017-09" / "tzur-2026-04"
-  readonly pairing?: {              // only for community lists
+  readonly version?: string;        // wordlist version label (human-facing)
+  readonly contentHash?: string;    // sha256 of canonical word serialization
+  readonly pairing?: {              // only for community lists; has OWN version
     readonly canonicalId: string;   // e.g. "english"
     readonly scheme: "index";       // index-paired translation
-    readonly verifiedBy?: string;   // test/vector reference
+    readonly version?: string;      // pairing/mapping version (independent)
+    readonly contentHash?: string;  // sha256 of the mapping serialization
+    readonly verifiedBy?: string;   // verification evidence reference
   };
 }
 ```
@@ -216,20 +219,54 @@ bit pattern that selects i and assert the mapped word equals
 | v2.0e | Provenance/versioning fields | Docs + registry metadata |
 | v2.0f | Packed-artifact + cross-impl compat suite | npm pack consumer green |
 
-## 9. Open questions
+## 9. Decisions (resolved)
 
-1. Should detection be a separate entry point or integrated into
-   `mnemonicToEntropy` via an `auto` wordlist sentinel? (Leaning separate —
-   keeps hot paths allocation-free.)
-2. Multi-community-list support: the mapping table is data-driven
-   (`pairing` metadata), so adding a future community list is config, not
-   code — confirm that's the intended extension model.
-3. Do we want a `canonicalMnemonic()` helper that returns both the mapped
-   phrase *and* its English entropy for display/audit, or keep mapping
-   internal to seed derivation?
-4. Versioning scheme for wordlists: date-based (`tzur-2026-04`) vs.
-   content-hash. Content-hash is self-verifying; date is human-readable.
-   Proposal: both (`version` + `contentHash`).
+The four open questions are resolved as follows:
+
+1. **Detection API — separate entry point, candidates + ambiguity.**
+   `detectLanguage(mnemonic)` returns a `DetectionResult` listing every
+   candidate wordlist with match counts and an explicit `ambiguous` flag.
+   It never silently selects a wordlist; callers must handle ambiguity.
+   Detection is NOT integrated into `mnemonicToEntropy` — hot decode paths
+   stay allocation-free and behavior is unchanged (I6).
+
+2. **Pairing model — explicit, versioned, provenance-verified index
+   mapping.** Community→canonical conversion uses ONLY the declared
+   `pairing` metadata on the wordlist (`scheme: "index"`, `canonicalId`,
+   `version`, `contentHash`). Lexical/semantic translation is out of scope.
+   Adding a future community list requires verified pairing metadata —
+   config plus evidence, not code (I2).
+
+3. **Audit helper — yes, exposed.** A public diagnostic helper returns the
+   mapped canonical mnemonic AND its decoded entropy/checksum status, so
+   callers can audit conversions without re-deriving them. Mapping remains
+   otherwise internal to seed derivation.
+
+4. **Versioning — independent wordlist and mapping versions.** Wordlists
+   carry `version` + `contentHash` (self-verifying). Mapping/pairing data
+   carries its own `version` + `contentHash` so a wordlist update and a
+   pairing correction can rev independently. Date strings are human-facing
+   labels only, never identity.
+
+## 9a. Pairing verification evidence (Bengali/TZUR → English)
+
+Verified 2026-11-19 against upstream `mappings/bengali.json`
+(`osem23/bip39-wordlists-tzur`, mapping `version: v1.0`,
+`sha256: d8938514b5b3826a64fd53a1651ec6708f6570be1c52ff0ab5cb9eaae68fcd3c`):
+
+- `sha256("\n".join(bengali.words) + "\n")` === published `sha256` —
+  our shipped `bengali.wordlist.json` word sequence is **byte-identical**
+  to the upstream TZUR wordlist.
+- `english_to_native[english.words[i]] === bengali.words[i]` for **all
+  2048 indices** — zero mismatches. Index pairing is exact and total.
+- `native_to_english` is a perfect inverse covering all 2048 Bengali words.
+- `normalization_form: NFC` confirmed; our NFC-keyed index maps are
+  consistent with it.
+
+Conclusion: `bengali ↔ english` index pairing is independently verified.
+Bengali→English mapping may proceed under invariant I1 with the property
+test in §6 as the ongoing gate. Any future wordlist update MUST re-run
+this verification before its `pairing` metadata is marked verified.
 
 ## 10. Explicit non-goals for v2
 
