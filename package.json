@@ -1,6 +1,6 @@
 {
   "name": "entropy-mnemonic",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "type": "module",
   "description": "A complete BIP-39 mnemonic and entropy generator with seed generation, validation, and multi-language support in TypeScript.",
   "main": "es/index.js",
