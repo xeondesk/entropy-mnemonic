@@ -2,6 +2,9 @@ import { getChecksumBin, getIntegerFromBin } from "./common";
 import { defaultList } from "./wordLists";
 import { IWordList } from "./wordLists/WordList";
 
+// BIP-39 allows 12, 15, 18, 21 or 24 word mnemonics (128-256 bits of entropy)
+const VALID_WORD_COUNTS = [12, 15, 18, 21, 24];
+
 // Cache word index maps to avoid recreating them on every call
 const wordIndexCache = new WeakMap<IWordList, Map<string, number>>();
 
@@ -12,39 +15,56 @@ const wordIndexCache = new WeakMap<IWordList, Map<string, number>>();
 function getWordIndexMap(wordList: IWordList): Map<string, number> {
   let cached = wordIndexCache.get(wordList);
   if (!cached) {
-    cached = new Map(wordList.words.map((word, index) => [word, index]));
+    // Keys are NFC-normalized so canonically-equivalent input (NFC or NFD)
+    // matches regardless of the normalization form stored in the wordlist.
+    // Verified collision-free for all shipped wordlists.
+    cached = new Map(wordList.words.map((word, index) => [word.normalize("NFC"), index]));
     wordIndexCache.set(wordList, cached);
   }
   return cached;
 }
 
 /**
+ * Splits a mnemonic phrase into words. Accepts any Unicode whitespace
+ * (including the Japanese ideographic space U+3000) regardless of the
+ * wordlist's canonical spacer, and normalizes to NFC so equivalent
+ * Unicode input matches the wordlist entries.
+ * @private
+ */
+function splitMnemonicWords(mnemonic: string): string[] {
+  return mnemonic.trim().normalize("NFC").split(/\s+/u).filter(Boolean);
+}
+
+/**
  * Gets the number of words in a mnemonic phrase.
- * @param mnemonic - Space-separated mnemonic phrase
+ * @param mnemonic - Mnemonic phrase (words separated by whitespace)
  * @param wordList - Word list to use (defaults to English)
  * @returns Number of words in the mnemonic
  */
-export function getWordCount(mnemonic: string, wordList: IWordList = defaultList): number {
-  return mnemonic.trim().split(wordList.spacer).filter(Boolean).length;
+export function getWordCount(
+  mnemonic: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for API compatibility; splitting is whitespace-based for all wordlists
+  wordList: IWordList = defaultList
+): number {
+  return splitMnemonicWords(mnemonic).length;
 }
 
 /**
  * Gets the entropy bit strength from a mnemonic phrase.
- * @param mnemonic - Space-separated mnemonic phrase
+ * @param mnemonic - Mnemonic phrase (words separated by whitespace)
  * @param wordList - Word list to use (defaults to English)
  * @returns Entropy bits (e.g., 128, 160, 192, 224, 256)
  * @throws Error if mnemonic is invalid
  */
 export function getEntropyBits(mnemonic: string, wordList: IWordList = defaultList): number {
   const wordCount = getWordCount(mnemonic, wordList);
-  const validWordCounts = [12, 15, 18, 21, 24];
-  
-  if (!validWordCounts.includes(wordCount)) {
+
+  if (!VALID_WORD_COUNTS.includes(wordCount)) {
     throw new Error(
       "[entropy-mnemonic] Invalid mnemonic: must contain 12, 15, 18, 21, or 24 words"
     );
   }
-  
+
   // Calculate entropy bits: (wordCount * 11) - (wordCount * 11 / 33)
   const totalBits = wordCount * 11;
   const checksumBits = totalBits / 33;
@@ -53,7 +73,7 @@ export function getEntropyBits(mnemonic: string, wordList: IWordList = defaultLi
 
 /**
  * Validates a BIP39 mnemonic phrase by checking its checksum.
- * @param mnemonic - Space-separated mnemonic phrase
+ * @param mnemonic - Mnemonic phrase (words separated by whitespace)
  * @param wordList - Word list to use (defaults to English)
  * @returns true if mnemonic is valid, false otherwise
  */
@@ -68,25 +88,35 @@ export function validateMnemonic(mnemonic: string, wordList: IWordList = default
 
 /**
  * Converts a BIP39 mnemonic phrase back to its entropy hex string.
- * @param mnemonic - Space-separated mnemonic phrase
+ * @param mnemonic - Mnemonic phrase (words separated by whitespace)
  * @param wordList - Word list to use (defaults to English)
  * @returns Hexadecimal entropy string
- * @throws Error if checksum is invalid or mnemonic contains invalid words
+ * @throws Error if the word count is invalid, a word is not in the list,
+ * or the checksum verification fails
  */
 export function mnemonicToEntropy(mnemonic: string, wordList: IWordList = defaultList) {
   if (!mnemonic || typeof mnemonic !== "string") {
+    throw new Error("[entropy-mnemonic] Invalid mnemonic: must be a non-empty string");
+  }
+
+  const words = splitMnemonicWords(mnemonic);
+  if (words.length === 0) {
     throw new Error(
-      "[entropy-mnemonic] Invalid mnemonic: must be a non-empty string"
+      "[entropy-mnemonic] Invalid mnemonic: must contain 12, 15, 18, 21, or 24 words"
+    );
+  }
+  if (!VALID_WORD_COUNTS.includes(words.length)) {
+    throw new Error(
+      "[entropy-mnemonic] Invalid mnemonic: must contain 12, 15, 18, 21, or 24 words"
     );
   }
 
-  const words = mnemonic.trim().split(wordList.spacer).filter(Boolean);
   const wordIndexMap = getWordIndexMap(wordList);
-  
+
   const bits = words
     .map((word) => {
-      const index = wordIndexMap.get(word) ?? wordList.words.indexOf(word);
-      if (index === -1) {
+      const index = wordIndexMap.get(word);
+      if (index === undefined) {
         throw new Error(
           `[entropy-mnemonic] Invalid mnemonic: word "${word}" not found in word list`
         );
@@ -99,9 +129,7 @@ export function mnemonicToEntropy(mnemonic: string, wordList: IWordList = defaul
   const entropyBits = bits.slice(0, dividerIndex);
   const checksumBits = bits.slice(dividerIndex);
 
-  const entropyBytes = entropyBits.match(/(.{1,8})/g)?.map((byte) =>
-    getIntegerFromBin(byte)
-  ) ?? [];
+  const entropyBytes = entropyBits.match(/(.{1,8})/g)?.map((byte) => getIntegerFromBin(byte)) ?? [];
   const newChecksum = getChecksumBin(entropyBytes);
 
   if (newChecksum !== checksumBits) {

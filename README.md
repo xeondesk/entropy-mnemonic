@@ -33,6 +33,8 @@ yarn add entropy-mnemonic
 
 ## Supported Languages
 
+Ten official BIP-39 wordlists (`kind: "bip39"`):
+
 - English
 - Chinese (Simplified)
 - Chinese (Traditional)
@@ -43,7 +45,10 @@ yarn add entropy-mnemonic
 - Korean
 - Portuguese
 - Spanish
-- Bengali
+
+Plus one community wordlist (`kind: "community"`, not part of the BIP-39 specification):
+
+- Bengali (TZUR Originals, index-paired to English — see [Seed derivation](#seed-derivation-and-wordlist-kind))
 
 ## Usage
 
@@ -95,6 +100,32 @@ const mnemonic = entropyToMnemonic(entropy, bengaliWordList);
 console.log(mnemonic); // Bengali mnemonic phrase
 ```
 
+### Wordlist Registry
+
+All wordlists are registered in a central `wordLists` record keyed by id (`"english"`, `"japanese"`, `"bengali"`, …), with lookup helpers:
+
+```typescript
+import {
+  wordLists,
+  getWordList,
+  getWordListIds,
+  isCanonicalWordList,
+} from 'entropy-mnemonic';
+
+getWordListIds(); // ["english", "japanese", ..., "bengali"]
+
+const ja = getWordList('japanese'); // official BIP-39 wordlist
+isCanonicalWordList(ja); // true
+
+const bn = getWordList('bengali'); // community wordlist
+isCanonicalWordList(bn); // false
+bn.kind;   // "community"
+bn.source; // "https://github.com/osem23/bip39-wordlists-tzur"
+bn.license; // "MIT"
+```
+
+Every `IWordList` exposes `id`, `language`, `spacer`, `kind` (`"bip39"` | `"community"`), optional `source`/`license` provenance, and `words` (2048 entries).
+
 ### Generate Seed from Mnemonic
 
 ```typescript
@@ -111,6 +142,13 @@ console.log(seed); // 128-character hex string (64 bytes)
 const seedWithPassphrase = mnemonicToSeed(mnemonic, "my secret passphrase");
 console.log(seedWithPassphrase); // Different seed due to passphrase
 ```
+
+#### Seed derivation and wordlist kind
+
+`mnemonicToSeed` always runs PBKDF2 over the literal mnemonic string (NFKD-normalized, per BIP-39):
+
+- **`kind: "bip39"`** wordlists produce spec-compliant, interoperable seeds.
+- **`kind: "community"`** wordlists (currently only Bengali) are not part of BIP-39. Their seeds are computed over the native-language text and will **not** match the seed an English BIP-39 wallet derives for the equivalent phrase. Mnemonic↔entropy round-trips still work within this library because the Bengali list is index-paired to English, but treat community-list seeds as implementation-specific.
 
 ### Validate Mnemonic
 
@@ -177,6 +215,10 @@ Converts a mnemonic phrase to a binary seed using PBKDF2 with HMAC-SHA512 (BIP-3
 - **wordList**: Word list used to generate the mnemonic (defaults to English)
 - **Returns**: Hexadecimal seed string (64 bytes / 128 hex characters)
 
+### `mnemonicToBip39Seed(mnemonic: string, passphrase?: string, wordList?: IWordList): string`
+
+Strict variant of `mnemonicToSeed` for BIP-39-interoperable seeds. Identical behavior, but **throws** if `wordList.kind !== "bip39"` — use it whenever the seed must be compatible with standard BIP-39 wallets.
+
 ### `validateMnemonic(mnemonic: string, wordList?: IWordList): boolean`
 
 Validates a mnemonic phrase by checking its checksum.
@@ -197,9 +239,41 @@ Gets the number of words in a mnemonic phrase.
 
 Gets the entropy bit strength from a mnemonic phrase.
 
-- **mnemonic**: Space-separated mnemonic phrase
+- **mnemonic**: Mnemonic phrase (words separated by whitespace)
 - **wordList**: Word list to use (defaults to English)
 - **Returns**: Entropy bits (e.g., 128, 160, 192, 224, 256)
+
+### `wordLists: Readonly<Record<string, IWordList>>`
+
+Central registry of all wordlists keyed by id.
+
+### `getWordListIds(): string[]`
+
+Returns the ids of all registered wordlists.
+
+### `getWordList(id: string): IWordList`
+
+Looks up a wordlist by id. Throws if the id is not registered.
+
+### `isCanonicalWordList(wordList: IWordList): boolean`
+
+Returns `true` for official BIP-39 wordlists (`kind === "bip39"`), `false` for community wordlists.
+
+### `IWordList`
+
+```typescript
+interface IWordList {
+  id: string;            // e.g. "english", "bengali"
+  language: string;      // BIP-39 language name
+  spacer: string;        // word separator used when generating (e.g. "\u3000" for Japanese)
+  kind: "bip39" | "community";
+  source?: string;       // provenance URL
+  license?: string;      // SPDX id, when verified
+  words: string[];       // exactly 2048 entries
+}
+```
+
+Note: mnemonic input parsing accepts any Unicode whitespace (including U+3000 for Japanese) and NFC/NFD-equivalent word forms, regardless of the list's canonical `spacer`.
 
 ## License
 
