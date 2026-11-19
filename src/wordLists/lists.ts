@@ -1,4 +1,5 @@
 import type { IWordList, WordlistKind } from "./WordList";
+import { computePairingContentHash, computeWordListContentHash } from "./integrity";
 
 import bengaliWordListJson from "./bengali.wordlist.json";
 import chineseSimplifiedWordListJson from "./chinese-simplified.wordlist.json";
@@ -22,6 +23,8 @@ interface WordListMeta {
   kind?: WordlistKind;
   source?: string;
   license?: string;
+  version?: string;
+  pairing?: IWordList["pairing"];
 }
 
 const BIP39_SOURCE = "https://github.com/bitcoin/bips/blob/master/bip-0039";
@@ -38,6 +41,9 @@ function defineWordList(id: string, json: WordListJson, meta: WordListMeta = {})
     kind: meta.kind ?? "bip39",
     source: meta.source,
     license: meta.license,
+    version: meta.version ?? (meta.kind === "community" ? undefined : "bip39-spec"),
+    contentHash: computeWordListContentHash(json.words),
+    pairing: meta.pairing,
     words: Object.freeze(json.words),
   });
 }
@@ -81,10 +87,24 @@ export const portugueseWordList = defineWordList("portuguese", portugueseWordLis
  * index-paired to English BIP-39), NOT an official BIP-39 wordlist.
  * See `kind === "community"` and `isCanonicalWordList`.
  */
+const BENGALI_CONTENT_HASH = computeWordListContentHash(bengaliWordListJson.words);
+
 export const bengaliWordList = defineWordList("bengali", bengaliWordListJson, {
   kind: "community",
   source: "https://github.com/osem23/bip39-wordlists-tzur",
   license: "MIT",
+  version: "tzur-v1.0",
+  pairing: {
+    canonicalId: "english",
+    scheme: "index",
+    version: "tzur-v1.0",
+    contentHash: computePairingContentHash(
+      { id: "bengali", contentHash: BENGALI_CONTENT_HASH },
+      { id: "english", contentHash: englishWordList.contentHash }
+    ),
+    verifiedBy:
+      "upstream-mapping-sha256:d8938514b5b3826a64fd53a1651ec6708f6570be1c52ff0ab5cb9eaae68fcd3c",
+  },
 });
 
 export const defaultList = englishWordList;

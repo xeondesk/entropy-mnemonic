@@ -3,6 +3,8 @@ export type { NormalizationProfile, UnicodeNormalizationForm } from "./normaliza
 export { getNormalizationProfile, normalizeForLookup } from "./normalization";
 export type { DetectionCandidate, DetectionResult } from "./detection";
 export { detectLanguage } from "./detection";
+export type { PairingAudit } from "./mapping";
+export { auditWordListPairing, mapMnemonicToCanonical, mapCanonicalToSource } from "./mapping";
 
 export {
   defaultList,

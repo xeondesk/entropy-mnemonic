@@ -126,6 +126,33 @@ bn.license; // "MIT"
 
 Every `IWordList` exposes `id`, `language`, `spacer`, `kind` (`"bip39"` | `"community"`), optional `source`/`license` provenance, and `words` (2048 entries).
 
+### Language Detection & Canonical Mapping (v2)
+
+```typescript
+import {
+  detectLanguage,
+  mapMnemonicToCanonical,
+  auditWordListPairing,
+  bengaliWordList,
+  mnemonicToEntropy,
+} from 'entropy-mnemonic';
+
+// Detection NEVER silently selects a wordlist.
+const detection = detectLanguage(mnemonic);
+if (detection.ambiguous || !detection.detected) {
+  // Require explicit user wordlist selection — do NOT guess.
+  throw new Error('Language is ambiguous or could not be determined');
+}
+const entropy = mnemonicToEntropy(mnemonic, detection.detected);
+
+// Community -> canonical mapping preserves entropy exactly
+// (H_source === H_canonical) and fails closed on stale hashes.
+const english = mapMnemonicToCanonical(bengaliMnemonic, bengaliWordList);
+
+// Audit pairing validity before relying on a conversion.
+auditWordListPairing(bengaliWordList).valid; // true
+```
+
 ### Generate Seed from Mnemonic
 
 ```typescript
