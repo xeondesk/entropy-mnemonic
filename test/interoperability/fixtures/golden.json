@@ -1,0 +1,45 @@
+{
+  "generated_by": "bip39@3.1.2 + @scure/bip39@2.4.0 + node:crypto pbkdf2",
+  "canonical": {
+    "english": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+    "japanese": "\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u304a\u305d\u3099\u3089",
+    "korean": "\u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1100\u1167\u11a8 \u1100\u1161\u1102\u1173\u11bc",
+    "spanish": "a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco a\u0301baco abierto",
+    "chinese-simplified": "\u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u5728",
+    "chinese-traditional": "\u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u7684 \u5728",
+    "french": "abaisser abaisser abaisser abaisser abaisser abaisser abaisser abaisser abaisser abaisser abaisser abeille",
+    "italian": "abaco abaco abaco abaco abaco abaco abaco abaco abaco abaco abaco abete",
+    "czech": "abdikace abdikace abdikace abdikace abdikace abdikace abdikace abdikace abdikace abdikace abdikace agrese",
+    "portuguese": "abacate abacate abacate abacate abacate abacate abacate abacate abacate abacate abacate abater"
+  },
+  "seeds": {
+    "128": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+    "160": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon address",
+    "192": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon agent",
+    "224": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon admit",
+    "256": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art",
+    "128_empty": "5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4",
+    "128_trezor": "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04",
+    "128_unicode": "0e0e0142b10cbccc42f112450f13e8d3c94a5e51cc7e6bb514dab013f807ecbcaf39a91bf321106a09caf7399d09898df18a1f367d5c8d26b8d5bb2fb6edb5e9",
+    "256_empty": "408b285c123836004f4b8842c89324c1f01382450c0d439af345ba7fc49acf705489c6fc77dbd4e3dc1dd8cc6bc9f043db8ada1e243c4a0eafb290d399480840"
+  },
+  "japanese": {
+    "mnemonic_128": "\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u3044\u3053\u304f\u3057\u3093\u3000\u3042\u304a\u305d\u3099\u3089",
+    "has_ideographic_space": true
+  },
+  "scure": {
+    "128": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+    "160": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon address",
+    "192": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon agent",
+    "224": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon admit",
+    "256": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art",
+    "128_seed_trezor": "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04"
+  },
+  "entropies": {
+    "128": "00000000000000000000000000000000",
+    "160": "0000000000000000000000000000000000000000",
+    "192": "000000000000000000000000000000000000000000000000",
+    "224": "00000000000000000000000000000000000000000000000000000000",
+    "256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}
