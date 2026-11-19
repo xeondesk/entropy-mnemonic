@@ -1,5 +1,6 @@
 import type { IWordList, WordlistKind } from "./WordList";
 import { computePairingContentHash, computeWordListContentHash } from "./integrity";
+import { WordlistNotFoundError } from "../errors";
 
 import bengaliWordListJson from "./bengali.wordlist.json";
 import chineseSimplifiedWordListJson from "./chinese-simplified.wordlist.json";
@@ -142,10 +143,7 @@ export function getWordListIds(): string[] {
 export function getWordList(id: string): IWordList {
   const wordList = wordLists[id];
   if (!wordList) {
-    throw new Error(
-      `[entropy-mnemonic] Unknown wordlist id "${id}". ` +
-        `Available ids: ${getWordListIds().join(", ")}`
-    );
+    throw new WordlistNotFoundError(id, getWordListIds());
   }
   return wordList;
 }

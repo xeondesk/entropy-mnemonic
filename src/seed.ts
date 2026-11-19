@@ -1,6 +1,7 @@
 import { mnemonicToEntropy } from "./mnemonic";
 import { defaultList, getWordList } from "./wordLists";
 import { mapMnemonicToCanonical } from "./wordLists/mapping";
+import { UnsupportedMappingError } from "./errors";
 import { IWordList } from "./wordLists/WordList";
 import * as pbkdf2 from "pbkdf2";
 
@@ -126,8 +127,8 @@ export function bip39SeedFromCommunity(
   passphrase: string = ""
 ): string {
   if (!sourceWordList || sourceWordList.kind !== "community") {
-    throw new Error(
-      `[entropy-mnemonic] bip39SeedFromCommunity requires a community ` +
+    throw new UnsupportedMappingError(
+      `bip39SeedFromCommunity requires a community ` +
         `wordlist (kind: "community"); got ${sourceWordList?.id ?? "none"} ` +
         `(kind: ${sourceWordList?.kind ?? "unknown"}). For canonical ` +
         `wordlists use mnemonicToBip39Seed.`
@@ -135,8 +136,8 @@ export function bip39SeedFromCommunity(
   }
   const pairing = sourceWordList.pairing;
   if (!pairing) {
-    throw new Error(
-      `[entropy-mnemonic] Wordlist "${sourceWordList.id}" has no pairing ` +
+    throw new UnsupportedMappingError(
+      `Wordlist "${sourceWordList.id}" has no pairing ` +
         `metadata; cannot derive a BIP-39-interoperable seed.`
     );
   }

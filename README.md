@@ -55,7 +55,7 @@ Plus one community wordlist (`kind: "community"`, not part of the BIP-39 specifi
 ### Generate Entropy
 
 ```typescript
-import { generateEntropy } from 'entropy-mnemonic';
+import { generateEntropy } from "entropy-mnemonic";
 
 // Generate 32 hex characters (128 bits) of entropy (default)
 const entropy128 = generateEntropy();
@@ -70,7 +70,7 @@ const entropy64 = generateEntropy(16);
 ### Convert Entropy to Mnemonic
 
 ```typescript
-import { entropyToMnemonic, englishWordList } from 'entropy-mnemonic';
+import { entropyToMnemonic, englishWordList } from "entropy-mnemonic";
 
 const entropy = generateEntropy(32); // 128 bits
 const mnemonic = entropyToMnemonic(entropy, englishWordList);
@@ -81,9 +81,10 @@ console.log(mnemonic); // e.g., "abandon ability able about above absent absorb 
 ### Convert Mnemonic to Entropy
 
 ```typescript
-import { mnemonicToEntropy, englishWordList } from 'entropy-mnemonic';
+import { mnemonicToEntropy, englishWordList } from "entropy-mnemonic";
 
-const mnemonic = "abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add addict address adjust admit adult advance advice aerobic affair afford afraid again age agent agree ahead aim air airport aisle alarm album alcohol alert alien all alley allow almost alone alpha already also alter always amateur amazing among amount amused analyst anchor ancient anger angle angry animal ankle announce annual another answer antenna antique anxiety any apart apology appear apple approve april arch arctic area arena argue arm armed armor army around arrange arrest arrive arrow art artefact artist artwork ask aspect assault asset assist assume asthma athlete atom attack attend attitude attract auction audit august aunt author auto autumn average avocado avoid awake aware away awesome awful awkward axis";
+const mnemonic =
+  "abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add addict address adjust admit adult advance advice aerobic affair afford afraid again age agent agree ahead aim air airport aisle alarm album alcohol alert alien all alley allow almost alone alpha already also alter always amateur amazing among amount amused analyst anchor ancient anger angle angry animal ankle announce annual another answer antenna antique anxiety any apart apology appear apple approve april arch arctic area arena argue arm armed armor army around arrange arrest arrive arrow art artefact artist artwork ask aspect assault asset assist assume asthma athlete atom attack attend attitude attract auction audit august aunt author auto autumn average avocado avoid awake aware away awesome awful awkward axis";
 const entropy = mnemonicToEntropy(mnemonic, englishWordList);
 
 console.log(entropy); // Returns the original entropy hex string
@@ -92,7 +93,7 @@ console.log(entropy); // Returns the original entropy hex string
 ### Using Different Languages
 
 ```typescript
-import { entropyToMnemonic, bengaliWordList } from 'entropy-mnemonic';
+import { entropyToMnemonic, bengaliWordList } from "entropy-mnemonic";
 
 const entropy = generateEntropy(32); // 128 bits
 const mnemonic = entropyToMnemonic(entropy, bengaliWordList);
@@ -105,21 +106,16 @@ console.log(mnemonic); // Bengali mnemonic phrase
 All wordlists are registered in a central `wordLists` record keyed by id (`"english"`, `"japanese"`, `"bengali"`, …), with lookup helpers:
 
 ```typescript
-import {
-  wordLists,
-  getWordList,
-  getWordListIds,
-  isCanonicalWordList,
-} from 'entropy-mnemonic';
+import { wordLists, getWordList, getWordListIds, isCanonicalWordList } from "entropy-mnemonic";
 
 getWordListIds(); // ["english", "japanese", ..., "bengali"]
 
-const ja = getWordList('japanese'); // official BIP-39 wordlist
+const ja = getWordList("japanese"); // official BIP-39 wordlist
 isCanonicalWordList(ja); // true
 
-const bn = getWordList('bengali'); // community wordlist
+const bn = getWordList("bengali"); // community wordlist
 isCanonicalWordList(bn); // false
-bn.kind;   // "community"
+bn.kind; // "community"
 bn.source; // "https://github.com/osem23/bip39-wordlists-tzur"
 bn.license; // "MIT"
 ```
@@ -135,13 +131,13 @@ import {
   auditWordListPairing,
   bengaliWordList,
   mnemonicToEntropy,
-} from 'entropy-mnemonic';
+} from "entropy-mnemonic";
 
 // Detection NEVER silently selects a wordlist.
 const detection = detectLanguage(mnemonic);
 if (detection.ambiguous || !detection.detected) {
   // Require explicit user wordlist selection — do NOT guess.
-  throw new Error('Language is ambiguous or could not be determined');
+  throw new Error("Language is ambiguous or could not be determined");
 }
 const entropy = mnemonicToEntropy(mnemonic, detection.detected);
 
@@ -153,10 +149,51 @@ const english = mapMnemonicToCanonical(bengaliMnemonic, bengaliWordList);
 auditWordListPairing(bengaliWordList).valid; // true
 ```
 
+#### Error handling
+
+All v2 APIs throw typed errors with machine-readable `code` fields — branch on `code`, never on message text:
+
+```typescript
+import {
+  MnemonicError,
+  hasErrorCode,
+  bip39SeedFromCommunity,
+  getDetectedWordList,
+} from "entropy-mnemonic";
+
+try {
+  const seed = bip39SeedFromCommunity(bnMnemonic, bengaliWordList, "TREZOR");
+} catch (e) {
+  if (e instanceof MnemonicError) {
+    switch (e.code) {
+      case "PAIRING_VERIFICATION":
+        /* stale/tampered pairing — do not retry */ break;
+      case "INVALID_MNEMONIC":
+        /* bad words/checksum — ask user to recheck */ break;
+      case "UNSUPPORTED_MAPPING":
+        /* wrong wordlist kind or missing pairing */ break;
+      default:
+        /* WORDLIST_NOT_FOUND | AMBIGUOUS_LANGUAGE | WORDLIST_INTEGRITY */ break;
+    }
+  }
+  throw e;
+}
+
+// Or require a single detected language explicitly:
+const wl = getDetectedWordList(mnemonic); // throws AmbiguousLanguageError if unsure
+```
+
+Error codes: `WORDLIST_NOT_FOUND`, `AMBIGUOUS_LANGUAGE`, `INVALID_MNEMONIC`, `WORDLIST_INTEGRITY`, `PAIRING_VERIFICATION`, `UNSUPPORTED_MAPPING`.
+
 ### Generate Seed from Mnemonic
 
 ```typescript
-import { mnemonicToSeed, generateEntropy, entropyToMnemonic, englishWordList } from 'entropy-mnemonic';
+import {
+  mnemonicToSeed,
+  generateEntropy,
+  entropyToMnemonic,
+  englishWordList,
+} from "entropy-mnemonic";
 
 const entropy = generateEntropy(32); // 128 bits
 const mnemonic = entropyToMnemonic(entropy, englishWordList);
@@ -180,7 +217,12 @@ console.log(seedWithPassphrase); // Different seed due to passphrase
 ### Validate Mnemonic
 
 ```typescript
-import { validateMnemonic, generateEntropy, entropyToMnemonic, englishWordList } from 'entropy-mnemonic';
+import {
+  validateMnemonic,
+  generateEntropy,
+  entropyToMnemonic,
+  englishWordList,
+} from "entropy-mnemonic";
 
 const entropy = generateEntropy(32); // 128 bits
 const mnemonic = entropyToMnemonic(entropy, englishWordList);
@@ -196,7 +238,13 @@ console.log(isInvalid); // false
 ### Get Word Count and Entropy Bits
 
 ```typescript
-import { getWordCount, getEntropyBits, generateEntropy, entropyToMnemonic, englishWordList } from 'entropy-mnemonic';
+import {
+  getWordCount,
+  getEntropyBits,
+  generateEntropy,
+  entropyToMnemonic,
+  englishWordList,
+} from "entropy-mnemonic";
 
 const entropy = generateEntropy(32); // 128 bits
 const mnemonic = entropyToMnemonic(entropy, englishWordList);
@@ -290,13 +338,13 @@ Returns `true` for official BIP-39 wordlists (`kind === "bip39"`), `false` for c
 
 ```typescript
 interface IWordList {
-  id: string;            // e.g. "english", "bengali"
-  language: string;      // BIP-39 language name
-  spacer: string;        // word separator used when generating (e.g. "\u3000" for Japanese)
+  id: string; // e.g. "english", "bengali"
+  language: string; // BIP-39 language name
+  spacer: string; // word separator used when generating (e.g. "\u3000" for Japanese)
   kind: "bip39" | "community";
-  source?: string;       // provenance URL
-  license?: string;      // SPDX id, when verified
-  words: string[];       // exactly 2048 entries
+  source?: string; // provenance URL
+  license?: string; // SPDX id, when verified
+  words: string[]; // exactly 2048 entries
 }
 ```
 

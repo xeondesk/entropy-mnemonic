@@ -3,6 +3,7 @@ import { getWordList } from "./lists";
 import { computePairingContentHash, computeWordListContentHash } from "./integrity";
 import { resolveWordIndex } from "./lookup";
 import { splitMnemonicWords } from "./normalization";
+import { InvalidMnemonicError, PairingVerificationError, UnsupportedMappingError } from "../errors";
 
 /**
  * Result of a wordlist pairing audit. `valid` is true only when every
@@ -128,8 +129,8 @@ function requireValidPairing(from: IWordList, to: IWordList): void {
       .filter(([, ok]) => !ok)
       .map(([name]) => name)
       .join(", ");
-    throw new Error(
-      `[entropy-mnemonic] Invalid wordlist pairing "${from.id}" -> "${to.id}": ` +
+    throw new PairingVerificationError(
+      `Invalid wordlist pairing "${from.id}" -> "${to.id}": ` +
         `failed checks: ${failed}. Mapping is disabled until pairing ` +
         `metadata and content hashes verify.`
     );
@@ -139,21 +140,20 @@ function requireValidPairing(from: IWordList, to: IWordList): void {
 function resolveCanonicalTarget(from: IWordList, to?: IWordList): IWordList {
   const pairing = from.pairing;
   if (!pairing) {
-    throw new Error(
-      `[entropy-mnemonic] Wordlist "${from.id}" has no pairing metadata; ` +
+    throw new UnsupportedMappingError(
+      `Wordlist "${from.id}" has no pairing metadata; ` +
         `community-to-canonical mapping is unavailable.`
     );
   }
   if (pairing.scheme !== "index") {
-    throw new Error(
-      `[entropy-mnemonic] Unsupported pairing scheme "${pairing.scheme}" ` +
-        `for wordlist "${from.id}".`
+    throw new UnsupportedMappingError(
+      `Unsupported pairing scheme "${pairing.scheme}" ` + `for wordlist "${from.id}".`
     );
   }
   const canonical = to ?? getWordList(pairing.canonicalId);
   if (canonical.id !== pairing.canonicalId) {
-    throw new Error(
-      `[entropy-mnemonic] Wordlist "${from.id}" is paired to "${pairing.canonicalId}", ` +
+    throw new PairingVerificationError(
+      `Wordlist "${from.id}" is paired to "${pairing.canonicalId}", ` +
         `not "${canonical.id}". Refusing to guess a pairing.`
     );
   }
@@ -164,15 +164,13 @@ function resolveCanonicalTarget(from: IWordList, to?: IWordList): IWordList {
 function mapByIndex(mnemonic: string, from: IWordList, to: IWordList): string {
   const words = splitMnemonicWords(mnemonic);
   if (words.length === 0) {
-    throw new Error(
-      "[entropy-mnemonic] Invalid mnemonic: must contain 12, 15, 18, 21, or 24 words"
-    );
+    throw new InvalidMnemonicError("Invalid mnemonic: must contain 12, 15, 18, 21, or 24 words");
   }
   const mapped = words.map((word) => {
     const index = resolveWordIndex(from, word);
     if (index === undefined) {
-      throw new Error(
-        `[entropy-mnemonic] Invalid mnemonic: word "${word}" not found in word list "${from.id}"`
+      throw new InvalidMnemonicError(
+        `Invalid mnemonic: word "${word}" not found in word list "${from.id}"`
       );
     }
     const target = to.words[index];

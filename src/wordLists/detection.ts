@@ -2,6 +2,7 @@ import type { IWordList } from "./WordList";
 import { wordLists } from "./lists";
 import { getWordIndexMap } from "./lookup";
 import { splitMnemonicWords } from "./normalization";
+import { AmbiguousLanguageError } from "../errors";
 
 /**
  * A wordlist that partially or fully matched a mnemonic phrase.
@@ -77,4 +78,31 @@ export function detectLanguage(
     ambiguous,
     detected: full.length === 1 ? full[0].wordList : undefined,
   };
+}
+
+/**
+ * Convenience wrapper around {@link detectLanguage} for callers that
+ * require exactly one wordlist. Throws AmbiguousLanguageError (code:
+ * "AMBIGUOUS_LANGUAGE") when detection is ambiguous or finds no match —
+ * never silently selects.
+ *
+ * @param mnemonic - Mnemonic phrase (any Unicode whitespace)
+ * @param lists - Wordlists to consider (defaults to all registered lists)
+ * @returns The single unambiguously detected wordlist
+ */
+export function getDetectedWordList(
+  mnemonic: string,
+  lists: readonly IWordList[] = ALL_LISTS
+): IWordList {
+  const result = detectLanguage(mnemonic, lists);
+  if (result.detected) return result.detected;
+  if (result.ambiguous) {
+    throw new AmbiguousLanguageError(
+      "Language detection is ambiguous; multiple wordlists fully match the phrase. " +
+        "Select a wordlist explicitly."
+    );
+  }
+  throw new AmbiguousLanguageError(
+    "Language could not be determined; no wordlist fully matches the phrase."
+  );
 }
