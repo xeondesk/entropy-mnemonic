@@ -41,6 +41,8 @@ export interface IWordList {
    * "tzur-v1.0"). Identity is `contentHash`, not this label.
    */
   readonly version?: string;
+  /** Hash algorithm used for contentHash. Always "sha256". */
+  readonly hashAlgorithm?: "sha256";
   /**
    * sha256 hex digest of the deterministic wordlist serialization
    * (`words.join("\n") + "\n"`). Any word change invalidates it.
@@ -75,6 +77,33 @@ export interface WordListPairing {
    * Changes whenever either wordlist's contentHash changes.
    */
   readonly contentHash?: string;
+  /** Hash algorithm used for pairing contentHash. Always "sha256". */
+  readonly hashAlgorithm?: "sha256";
   /** Reproducible verification reference (test suite / upstream artifact). */
+  readonly verifiedBy?: string;
+}
+
+/**
+ * Independently verifiable identity of a wordlist.
+ */
+export interface WordlistIdentity {
+  readonly id: string;
+  readonly version?: string;
+  readonly contentHash?: string;
+  readonly hashAlgorithm?: "sha256";
+}
+
+/**
+ * Identity of a verified community→canonical pairing. Binds BOTH
+ * wordlist content hashes; a change to either wordlist invalidates it.
+ */
+export interface PairingIdentity {
+  readonly fromId: string;
+  readonly toId: string;
+  readonly version?: string;
+  readonly fromContentHash?: string;
+  readonly toContentHash?: string;
+  readonly contentHash?: string;
+  readonly hashAlgorithm?: "sha256";
   readonly verifiedBy?: string;
 }

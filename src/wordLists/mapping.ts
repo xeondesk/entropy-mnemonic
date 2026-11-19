@@ -1,4 +1,4 @@
-import type { IWordList } from "./WordList";
+import type { IWordList, PairingIdentity, WordlistIdentity } from "./WordList";
 import { getWordList } from "./lists";
 import { computePairingContentHash, computeWordListContentHash } from "./integrity";
 import { resolveWordIndex } from "./lookup";
@@ -209,4 +209,43 @@ export function mapMnemonicToCanonical(mnemonic: string, from: IWordList, to?: I
 export function mapCanonicalToSource(mnemonic: string, from: IWordList, to?: IWordList): string {
   const canonical = resolveCanonicalTarget(from, to);
   return mapByIndex(mnemonic, canonical, from);
+}
+
+/**
+ * Returns the independently verifiable identity of a wordlist.
+ */
+export function getWordlistIdentity(wordList: IWordList): WordlistIdentity {
+  return {
+    id: wordList.id,
+    version: wordList.version,
+    contentHash: wordList.contentHash,
+    hashAlgorithm: wordList.hashAlgorithm,
+  };
+}
+
+/**
+ * Returns the pairing identity for a community wordlist, or undefined
+ * if no pairing is declared. The identity binds both wordlist content
+ * hashes — a wordlist update invalidates it.
+ */
+export function getPairingIdentity(wordList: IWordList): PairingIdentity | undefined {
+  const p = wordList.pairing;
+  if (!p) return undefined;
+  const canonical = (() => {
+    try {
+      return getWordList(p.canonicalId);
+    } catch {
+      return undefined;
+    }
+  })();
+  return {
+    fromId: wordList.id,
+    toId: p.canonicalId,
+    version: p.version,
+    fromContentHash: wordList.contentHash,
+    toContentHash: canonical?.contentHash,
+    contentHash: p.contentHash,
+    hashAlgorithm: p.hashAlgorithm,
+    verifiedBy: p.verifiedBy,
+  };
 }

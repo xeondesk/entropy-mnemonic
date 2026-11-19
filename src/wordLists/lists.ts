@@ -43,6 +43,7 @@ function defineWordList(id: string, json: WordListJson, meta: WordListMeta = {})
     source: meta.source,
     license: meta.license,
     version: meta.version ?? (meta.kind === "community" ? undefined : "bip39-spec"),
+    hashAlgorithm: "sha256",
     contentHash: computeWordListContentHash(json.words),
     pairing: meta.pairing,
     words: Object.freeze(json.words),
@@ -99,6 +100,7 @@ export const bengaliWordList = defineWordList("bengali", bengaliWordListJson, {
     canonicalId: "english",
     scheme: "index",
     version: "tzur-v1.0",
+    hashAlgorithm: "sha256",
     contentHash: computePairingContentHash(
       { id: "bengali", contentHash: BENGALI_CONTENT_HASH },
       { id: "english", contentHash: englishWordList.contentHash }
