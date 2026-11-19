@@ -36,6 +36,74 @@ export interface IWordList {
   source?: string;
   /** SPDX license identifier, present only when verified. */
   license?: string;
+  /**
+   * Wordlist content version label (human-facing, e.g. "bip39-spec",
+   * "tzur-v1.0"). Identity is `contentHash`, not this label.
+   */
+  readonly version?: string;
+  /** Hash algorithm used for contentHash. Always "sha256". */
+  readonly hashAlgorithm?: "sha256";
+  /**
+   * sha256 hex digest of the deterministic wordlist serialization
+   * (`words.join("\n") + "\n"`). Any word change invalidates it.
+   */
+  readonly contentHash?: string;
+  /**
+   * Community→canonical pairing declaration. Present only on community
+   * wordlists with verified index pairing. Has its OWN version/hash so
+   * wordlist and pairing revisions are independent; a wordlist update
+   * invalidates pairing verification.
+   */
+  readonly pairing?: WordListPairing;
   /** The 2048-word list, indexed 0-2047 (11 bits per word). Frozen at runtime. */
   readonly words: readonly string[];
+}
+
+/**
+ * Declared relationship between a community wordlist and a canonical
+ * BIP-39 wordlist. `scheme: "index"` means word at index i in the source
+ * list is the translation of word at index i in the canonical list —
+ * indices, not vocabulary, are what mapping preserves.
+ */
+export interface WordListPairing {
+  /** Id of the canonical target wordlist (must be kind "bip39"). */
+  readonly canonicalId: string;
+  /** Pairing scheme. Only "index" is supported. */
+  readonly scheme: "index";
+  /** Pairing/mapping version label (independent of wordlist version). */
+  readonly version?: string;
+  /**
+   * sha256 over the binding `${fromId}:${toId}:${fromHash}:${toHash}`.
+   * Changes whenever either wordlist's contentHash changes.
+   */
+  readonly contentHash?: string;
+  /** Hash algorithm used for pairing contentHash. Always "sha256". */
+  readonly hashAlgorithm?: "sha256";
+  /** Reproducible verification reference (test suite / upstream artifact). */
+  readonly verifiedBy?: string;
+}
+
+/**
+ * Independently verifiable identity of a wordlist.
+ */
+export interface WordlistIdentity {
+  readonly id: string;
+  readonly version?: string;
+  readonly contentHash?: string;
+  readonly hashAlgorithm?: "sha256";
+}
+
+/**
+ * Identity of a verified community→canonical pairing. Binds BOTH
+ * wordlist content hashes; a change to either wordlist invalidates it.
+ */
+export interface PairingIdentity {
+  readonly fromId: string;
+  readonly toId: string;
+  readonly version?: string;
+  readonly fromContentHash?: string;
+  readonly toContentHash?: string;
+  readonly contentHash?: string;
+  readonly hashAlgorithm?: "sha256";
+  readonly verifiedBy?: string;
 }
